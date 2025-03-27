@@ -1,13 +1,11 @@
-from flask import Flask
+from flask import Flask, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 
 
 db = SQLAlchemy()
-# create the app
 app = Flask(__name__)
-# configure the SQLite database, relative to the app instance folder
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
-# initialize the app with the extension
+
 db.init_app(app)
 
 
@@ -47,3 +45,9 @@ def user_delete(id):
         return redirect(url_for("user_list"))
 
     return render_template("user/delete.html", user=user)
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+    
