@@ -9,7 +9,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
 db.init_app(app)
 
 
-app.run(debug=True)
+
 
 
 @app.route("/users")
@@ -50,4 +50,17 @@ def user_delete(id):
 @app.route("/")
 def index():
     return render_template("index.html")
-    
+
+@app.route("/forums")
+def forums():
+    return render_template("forums.html")
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
+
+
+
+
+
+app.run(debug=True)
