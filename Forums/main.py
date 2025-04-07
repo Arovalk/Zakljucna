@@ -16,7 +16,7 @@ class Topic(db.Model):
 
 class Comment(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
-    text: Mapped[str] = mapped_column(unique=True)
+    text: Mapped[str]
     topicId: Mapped[str]
 
 with app.app_context():
@@ -54,10 +54,10 @@ def topic(id):
     # prikaži razpravo
     topic = db.get_or_404(Topic, id)
     comments = Comment.query.filter_by(topicId=id).all()
-    print(comments)
-    for comment in comments:
-        print(comment)
-    return render_template("topic.html", topic=topic)
+#    print(comments)
+#    for comment in comments:
+#        print(comment)
+    return render_template("topic.html", topic=topic, comments=comments)
 
 
 app.run(debug=True)
