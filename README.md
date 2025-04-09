@@ -56,3 +56,15 @@
 -   **Oglasi** - (Google AdSense ali podobne platforme).
     
 -   **Plačljivo članstvo**  - (mesečna naročnina, ki omogoča prednostno prikazovanje komentarjev).
+
+
+**Struktura stroškov:**
+
+-   Začetni razvoj: 500€ (Enostaven razvoj, delo ustanoviteljev)
+    
+-   Mesečno vzdrževanje: 150€ (majhen strežnik, moderiranje, posodobitve)
+    
+-   Marketing: 200€ mesečno (predvsem spletno oglaševanje, )
+
+
+
