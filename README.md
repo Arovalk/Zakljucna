@@ -75,3 +75,19 @@
 
 - Oglaševanje na spletnih omrežjih (facebook, tiktok, reddit, itd.)
 
+---
+
+**Osnovne funkcije**
+
+- Login / register
+
+- Objavljanje razprav in komentiranje na razprave
+
+
+**Dodatne funkcije**
+
+- Sledenje profilom
+
+- Profilne slike *(mogoče)*
+
+- Moderatorska plošča
