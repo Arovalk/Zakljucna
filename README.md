@@ -67,4 +67,11 @@
 -   Marketing: 200€ mesečno (predvsem spletno oglaševanje, )
 
 
+**Pridobivanje prvih uporabnikov**
+
+- Skozi prijatelje
+
+- Na različnih tekmovanjih in šolah za pse, itd.
+
+- Oglaševanje na spletnih omrežjih (facebook, tiktok, reddit, itd.)
 
