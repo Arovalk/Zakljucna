@@ -4,9 +4,11 @@ from sqlalchemy.orm import Mapped, mapped_column
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
+
 db = SQLAlchemy()
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
+app.secret_key = "Rambo"
 
 db.init_app(app)
 
@@ -25,7 +27,7 @@ class Comment(db.Model):
 class User(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(nullable=False)
+    password_hash: Mapped[str] = mapped_column(nullable=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -42,18 +44,21 @@ def home():
     if request.method == "POST":
         # Dodamo razpravo
         topic = Topic(
-            title=request.form["title"],
-            description=request.form["description"],
+        title=request.form["title"],
+        description=request.form["description"],
         )
         db.session.add(topic)
         db.session.commit()
 
     topics = db.session.execute(db.select(Topic)).scalars()
-#    for topic in topics:
-#        print(topic.title, topic.description, topic.id)
-    
-    return render_template("index.html", topics=topics)
+     # Set username during login
+    print(session["username"])
+    if "username" in session:
+        return render_template("index.html", topics=topics, username=session['username'])
 
+    else:
+        return render_template("index.html", topics=topics, username='anonymous')
+    
 @app.route("/topic/<int:id>",methods=["GET", "POST"])
 def topic(id):
     if request.method == "POST":
@@ -69,30 +74,38 @@ def topic(id):
     # prikaži razpravo
     topic = db.get_or_404(Topic, id)
     comments = Comment.query.filter_by(topicId=id).all()
-#    print(comments)
-#    for comment in comments:
-#        print(comment)
-    return render_template("topic.html", topic=topic, comments=comments)
+    if "username" in session:
+        return render_template("topic.html", topic=topic, comments=comments, username=session['username'])
+    else:
+        return render_template("topic.html", topic=topic, comments=comments, username="anonymous")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "POST":
-        username = request.form.get("username")  
-        password = request.form.get("password")
-        print(username, password)       
-        user = User.query.filter_by(username=username).first()
-        
-        
-        
-        if user and user.check_password(password):
-            session["user_id"] = user.id
-            return redirect(url_for("home"))
-        else:
-            return render_template("login.html")
+    username = request.form.get("username")  
+    password = request.form.get("password")
+    print(username, password)       
+    user = User.query.filter_by(username=username).first()
     
-    return render_template("login.html")      
-
-
-
+    if user and user.check_password(password):
+        session["user_id"] = user.id
+        session["username"] = user.username 
+        return redirect(url_for("home"))
+    else:
+        return render_template("login.html")
+  
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    username = request.form.get("username")  
+    password = request.form.get("password")
+    user = User.query.filter_by(username=username).first()
+    if user:
+        return render_template("login.html", error="Username already exists")
+    else:
+        new_user = User(username=username)
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.commit()
+        session['username'] = username
+        return redirect(url_for('login'))
 
 app.run(debug=True)
