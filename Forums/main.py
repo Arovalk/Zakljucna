@@ -16,11 +16,14 @@ class Topic(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(unique=True)
     description: Mapped[str]
+    author: Mapped[str]
 
 class Comment(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str]
     topicId: Mapped[str]
+    author: Mapped[str]
+
 
 
 
@@ -28,6 +31,7 @@ class User(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(nullable=False)
+
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -40,32 +44,46 @@ with app.app_context():
     db.create_all()
 
 @app.route("/",methods=["GET", "POST"])
+def index():
+    return render_template("index.html")
+
+
+
+
+@app.route("/home",methods=["GET", "POST"])
 def home():
     if request.method == "POST":
         # Dodamo razpravo
         topic = Topic(
-        title=request.form["title"],
-        description=request.form["description"],
+            title=request.form["title"],
+            description=request.form["description"],
+            author=session['username'],
         )
         db.session.add(topic)
         db.session.commit()
+    
 
     topics = db.session.execute(db.select(Topic)).scalars()
-     # Set username during login
-    print(session["username"])
+     # nastavi username na "anonymous" če ni prijavljen
     if "username" in session:
-        return render_template("index.html", topics=topics, username=session['username'])
+        return render_template("home.html", topics=topics, username=session['username'])
 
     else:
-        return render_template("index.html", topics=topics, username='anonymous')
+        return render_template("home.html", topics=topics, username='anonymous')
     
 @app.route("/topic/<int:id>",methods=["GET", "POST"])
 def topic(id):
+    
+    if "username" not in session:
+        session['username'] = 'anonymous'
+    
+    
     if request.method == "POST":
         # Dodamo kommentar na razpravo
         comment = Comment(
             text=request.form["comment"],
-            topicId=id
+            topicId=id,
+            author=session['username']
         )
         db.session.add(comment)
         db.session.commit()
@@ -74,6 +92,7 @@ def topic(id):
     # prikaži razpravo
     topic = db.get_or_404(Topic, id)
     comments = Comment.query.filter_by(topicId=id).all()
+    print(comments)
     if "username" in session:
         return render_template("topic.html", topic=topic, comments=comments, username=session['username'])
     else:
@@ -107,5 +126,27 @@ def register():
         db.session.commit()
         session['username'] = username
         return redirect(url_for('login'))
+
+
+
+@app.route("/profile", methods=["GET"])
+def profile():
+    if "username" not in session or session["username"] == "anonymous":
+        return redirect(url_for("login")) 
+
+    user = User.query.filter_by(username=session["username"]).first()
+    if not user:
+        return redirect(url_for("login"))  
+
+    topic_count = Topic.query.filter_by(author=session["username"]).count()
+    comment_count = Comment.query.filter_by(author=session["username"]).count()
+
+    return render_template("profile.html", user=user, topic_count=topic_count, comment_count=comment_count)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()  
+    return redirect(url_for("login"))
 
 app.run(debug=True)
