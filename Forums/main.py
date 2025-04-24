@@ -52,6 +52,9 @@ def index():
 
 @app.route("/home",methods=["GET", "POST"])
 def home():
+    if "username" not in session:
+        session['username'] = 'anonymous'
+    
     if request.method == "POST":
         # Dodamo razpravo
         topic = Topic(
@@ -59,6 +62,9 @@ def home():
             description=request.form["description"],
             author=session['username'],
         )
+        if Topic.query.filter_by(title=topic.title).first():
+            topics = db.session.execute(db.select(Topic)).scalars()
+            return render_template("home.html", error="Topic already exists", topics=topics, username=session['username'])
         db.session.add(topic)
         db.session.commit()
     
@@ -109,6 +115,8 @@ def login():
         session["user_id"] = user.id
         session["username"] = user.username 
         return redirect(url_for("home"))
+    if user and not user.check_password(password):
+        return render_template("login.html", error="Wrong password")
     else:
         return render_template("login.html")
   
@@ -149,4 +157,10 @@ def logout():
     session.clear()  
     return redirect(url_for("login"))
 
+
+@app.route("/about")
+def about(): 
+    if "username" not in session:
+        session['username'] = 'anonymous'
+    return render_template("about.html", username=session['username'])
 app.run(debug=True)

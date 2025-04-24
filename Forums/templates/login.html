@@ -22,7 +22,7 @@
             <a class="nav-link active" aria-current="page" href="/login">Login</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#">About</a>
+            <a class="nav-link" href="/about">About</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="/profile">{{username}}</a>
@@ -32,6 +32,14 @@
       </div>
     </div>
   </nav>
+  <div class="container">
+    <!-- error message -->
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endif %}
+</div>
     <form id="auth-form" method="POST" action="/login">
       <input type="text" name="username" placeholder="Username" required>
       <input type="password" name="password" placeholder="Password" required>
