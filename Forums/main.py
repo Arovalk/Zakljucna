@@ -54,8 +54,12 @@ def index():
 def home():
     if "username" not in session:
         session['username'] = 'anonymous'
+        
     
     if request.method == "POST":
+        #preverimo če je uporabnik prijavljen
+        if session['username'] == 'anonymous':
+            return render_template("home.html", error="Moraš se prijaviti, ce hočes ustvariti temo", username=session['username'])
         # Dodamo razpravo
         topic = Topic(
             title=request.form["title"],
@@ -82,9 +86,12 @@ def topic(id):
     
     if "username" not in session:
         session['username'] = 'anonymous'
+        
     
     
     if request.method == "POST":
+        if session['username'] == 'anonymous':
+            return render_template("home.html", error="Moraš se prijaviti, ce hočes komentirati", username=session['username'])
         # Dodamo kommentar na razpravo
         comment = Comment(
             text=request.form["comment"],
@@ -163,4 +170,20 @@ def about():
     if "username" not in session:
         session['username'] = 'anonymous'
     return render_template("about.html", username=session['username'])
+
+
+@app.route("/profileView/<string:author>", methods=["GET", "POST"])
+def profileView(author):
+    author_name = User.query.filter_by(username=author).first()
+    topic_count = Topic.query.filter_by(author=author).count()
+    comment_count = Comment.query.filter_by(author=author).count()
+    return render_template("profile.html", user=author_name, topic_count=topic_count, comment_count=comment_count)
+    
+
+
+
+
+
+
+
 app.run(debug=True)

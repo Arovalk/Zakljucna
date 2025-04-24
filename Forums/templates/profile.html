@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile Dashboard</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/logo.jpeg') }}" type="image/jpeg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 </head>
 <body>
@@ -36,12 +37,10 @@
         </div>
       </nav>
     <div class="container mt-5">
-        <h1 class="mb-4">Welcome, {{ user.username }}</h1>
         <div class="card">
             <div class="card-body">
                 <h5 class="card-title">Profile Information</h5>
                 <p><strong>Username:</strong> {{ user.username }}</p>
-                <p><strong>User ID:</strong> {{ user.id }}</p>
                 <p><strong>število objav:</strong> {{ topic_count }}</p>
                 <p><strong>število komentarjev:</strong> {{ comment_count }}</p>
                 <a href="/home" class="btn btn-primary">Go to Home</a>
