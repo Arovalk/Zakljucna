@@ -30,7 +30,9 @@
             </li>
             <li class="nav-item">
               <a class="nav-link" href="/logout">Logout</a>
-              
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/admin">admin</a>
             </li>
           </ul>
         </div>
@@ -42,9 +44,10 @@
         <h1 class="fs-4 text">SpletneTačke Forum</h1>
         <div class="my-3 p-3 bg-body rounded shadow-sm">
           
-          <a class="border-bottom pb-2 mb-0 fs-5" href="/profileView/{{topic.author}}">@{{topic.author}}</a>
+          <a class="border-bottom pb-2 mb-0 fs-5" href="/profileView/{{topic.author}}">@{{topic.author}} </a>
           
           <h6 class="border-bottom pb-2 mb-0">{{topic.id}}. {{topic.title}}</h6>
+          <h6 class="border-bottom pb-2 mb-0">{{topic.time}}</h6>
           
         
 
@@ -70,8 +73,8 @@
     
           <div class="pb-3 mb-0 small lh-sm border-bottom w-100">
             <div class="d-flex justify-content-between">
-              <strong class="text-gray-dark">@{{comment.author}}</strong>
-              <a href="#">Follow</a>
+              <strong class="text-gray-dark">@{{comment.author}}   </strong>
+              <a href="#">{{comment.time}}</a>
             </div>
             <span class="">{{comment.text}}</span>
           </div>

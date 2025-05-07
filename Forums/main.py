@@ -2,6 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Mapped, mapped_column
 from werkzeug.security import generate_password_hash, check_password_hash
+import datetime
+
+
 
 
 
@@ -17,12 +20,14 @@ class Topic(db.Model):
     title: Mapped[str] = mapped_column(unique=True)
     description: Mapped[str]
     author: Mapped[str]
+    time: Mapped[str] = mapped_column(default="")
 
 class Comment(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str]
     topicId: Mapped[str]
     author: Mapped[str]
+    time: Mapped[str] = mapped_column(default="")
 
 
 
@@ -31,6 +36,7 @@ class User(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(nullable=False)
+    is_admin: Mapped[bool] = mapped_column(default=False)
 
 
     def set_password(self, password):
@@ -61,10 +67,12 @@ def home():
         if session['username'] == 'anonymous':
             return render_template("home.html", error="Moraš se prijaviti, ce hočes ustvariti temo", username=session['username'])
         # Dodamo razpravo
+        now = datetime.datetime.now().strftime("%d-%m-%Y")
         topic = Topic(
             title=request.form["title"],
             description=request.form["description"],
             author=session['username'],
+            time=now
         )
         if Topic.query.filter_by(title=topic.title).first():
             topics = db.session.execute(db.select(Topic)).scalars()
@@ -93,10 +101,12 @@ def topic(id):
         if session['username'] == 'anonymous':
             return render_template("home.html", error="Moraš se prijaviti, ce hočes komentirati", username=session['username'])
         # Dodamo kommentar na razpravo
+        now = datetime.datetime.now().strftime("%d-%m-%Y")
         comment = Comment(
             text=request.form["comment"],
             topicId=id,
-            author=session['username']
+            author=session['username'],
+            time=now
         )
         db.session.add(comment)
         db.session.commit()
@@ -131,11 +141,12 @@ def login():
 def register():
     username = request.form.get("username")  
     password = request.form.get("password")
+    is_admin = request.form.get("is_admin") == "on"
     user = User.query.filter_by(username=username).first()
     if user:
         return render_template("login.html", error="Username already exists")
     else:
-        new_user = User(username=username)
+        new_user = User(username=username, is_admin=is_admin)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
@@ -180,10 +191,116 @@ def profileView(author):
     return render_template("profile.html", user=author_name, topic_count=topic_count, comment_count=comment_count)
     
 
+@app.route("/admin", methods=["GET", "POST"])
+def admin_dashboard():
+    if "username" not in session or session["username"] == "anonymous":
+        return redirect(url_for("login")) 
+
+    user = User.query.filter_by(username=session["username"]).first()
+    if not user or not user.is_admin:
+        return "Access Denied", 403
+
+    users = User.query.all()
+    topics = Topic.query.all()
+    comments = Comment.query.all()
+
+    return render_template("admin.html", users=users, topics=topics, comments=comments)
+
+@app.route("/make_admin/<int:user_id>", methods=["POST"])
+def make_admin(user_id):
+    if "username" not in session or session["username"] == "anonymous":
+        return redirect(url_for("login"))
+
+    current_user = User.query.filter_by(username=session["username"]).first()
+    if not current_user or not current_user.is_admin:
+        return "Access Denied", 403
+
+    user = User.query.get(user_id)
+    if not user:
+        return "User not found", 404
+
+    user.is_admin = True
+    db.session.commit()
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/remove_admin/<int:user_id>", methods=["POST"])
+def remove_admin(user_id):
+    if "username" not in session or session["username"] == "anonymous":
+        return redirect(url_for("login"))
+
+    current_user = User.query.filter_by(username=session["username"]).first()
+    if not current_user or not current_user.is_admin:
+        return "Access Denied", 403
+
+    user = User.query.get(user_id)
+    if not user:
+        return "User not found", 404
+
+    user.is_admin = False
+    db.session.commit()
+    return redirect(url_for("profileView", author=user.username))
+
+
+@app.route("/delete_user/<int:user_id>", methods=["POST"])
+def delete_user(user_id):
+    if "username" not in session or session["username"] == "anonymous":
+        return redirect(url_for("login"))
+
+    current_user = User.query.filter_by(username=session["username"]).first()
+    if not current_user or not current_user.is_admin:
+        return "Access Denied", 403
+
+    user = User.query.get(user_id)
+    if not user:
+        return "User not found", 404
+
+    db.session.delete(user)
+    db.session.commit()
+    return redirect(url_for("admin_dashboard"))
 
 
 
 
+@app.route("/delete_topic/<int:topic_id>", methods=["POST"])
+def delete_topic(topic_id):
+    if "username" not in session or session["username"] == "anonymous":
+        return redirect(url_for("login"))
 
+    current_user = User.query.filter_by(username=session["username"]).first()
+    if not current_user or not current_user.is_admin:
+        return "Access Denied", 403
+
+    topic = Topic.query.get(topic_id)
+    if not topic:
+        return "Topic not found", 404
+    
+    comments = Comment.query.filter_by(topicId=topic_id).all()
+    for comment in comments:
+        db.session.delete(comment)
+
+    db.session.delete(topic)
+    db.session.commit()
+    return redirect(url_for("admin_dashboard"))
+
+
+
+
+@app.route("/delete_comment/<int:comment_id>", methods=["POST"])
+def delete_comment(comment_id):
+    if "username" not in session or session["username"] == "anonymous":
+        return redirect(url_for("login"))
+
+    current_user = User.query.filter_by(username=session["username"]).first()
+    if not current_user or not current_user.is_admin:
+        return "Access Denied", 403
+
+    comment = Comment.query.get(comment_id)
+    if not comment:
+        return "Comment not found", 404
+
+    db.session.delete(comment)
+    db.session.commit()
+    return redirect(url_for("admin_dashboard"))
 
 app.run(debug=True)
